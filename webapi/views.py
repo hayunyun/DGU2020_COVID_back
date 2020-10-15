@@ -10,7 +10,7 @@ import dgucovidb.sql_interface as sql
 
 # This path is relative to the repo root path where manage.py is located
 BLAST_INTERF = bst.InterfBLAST("./database/blast")
-MYSQL_INTERF = sql.InterfMySQL("woos8899", "Finethensql22@")
+MYSQL_INTERF = sql.InterfMySQL("dgucovid", "COVID@dgu2020")
 
 
 class TestList(APIView):
