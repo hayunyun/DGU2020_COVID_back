@@ -38,3 +38,9 @@ $ pipenv shell
   `python manage.py runserver` 입력
   
   
+### 6. 슈퍼유저
+/admin으로 어드민 페이지 접속
+```
+ID : super
+PW : tbvjdbwj (슈퍼유저 영타에서 그대로 입력)
+```
