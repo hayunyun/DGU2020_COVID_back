@@ -1,3 +1,4 @@
+import os
 from typing import Dict
 
 from rest_framework.views import APIView
@@ -39,18 +40,21 @@ class SimilarSeqIDs(APIView):
             return Response("no input found")
         except ValueError:
             return Response("invalid input")
-        else:
-            input_sequence = "".join(input_sequence.split('\n'))
 
-            print("[] started blast query")
-            if not BLAST_INTERF.gen_query_result(input_sequence, "result.tmp"):
-                return Response("failed to generate BLAST query result")
+        input_sequence = "".join(input_sequence.split('\n'))
+        result_file_name = "result.tmp"
 
-            print("[] started finding similar ids")
-            ids = BLAST_INTERF.find_ids_of_the_similars("result.tmp", how_many)
+        print("[] started blast query")
+        if not BLAST_INTERF.gen_query_result(input_sequence, result_file_name):
+            return Response("failed to generate BLAST query result")
 
-            result: Dict[str: Dict] = {}
-            for acc_id in ids:
-                result[acc_id] = MYSQL_INTERF.get_metadata_of(acc_id)
+        print("[] started finding similar ids")
+        ids = BLAST_INTERF.find_ids_of_the_similars(result_file_name, how_many)
 
-            return Response(result)
+        os.remove(result_file_name)
+
+        result: Dict[str: Dict] = {}
+        for acc_id in ids:
+            result[acc_id] = MYSQL_INTERF.get_metadata_of(acc_id)
+
+        return Response(result)
