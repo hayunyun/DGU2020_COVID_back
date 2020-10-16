@@ -44,3 +44,49 @@ $ pipenv shell
 ID : super
 PW : tbvjdbwj (슈퍼유저 영타에서 그대로 입력)
 ```
+
+# 실행 방법 for Windows 10
+
+## 환경 설정
+
+1. Python 3 설치
+    1. 필요한 라이브러리 설치
+        1. pip install `django`
+        1. pip install `djangorestframework`
+        1. pip install `django-cors-headers`
+
+1. MySQL [다운로드](https://dev.mysql.com/downloads/installer/)하여 설치
+    1. Terminal에서 `mysql` 프로그램을 바로 실행할 수 있도록 환경변수 등 준비
+    1. 서버에서는 user name이 `dgucovid`이고 비밀번호가 `COVID@dgu2020`인 계정을 사용하므로 지금 만들어야 함
+    1. Terminal을 열어서 다음 명령어들을 입력하여 계정 추가
+        1. `mysql -u root -p`
+        1. MySQL 설치할 때 설정한 root 계정의 비밀번호 입력
+        1. `CREATE USER 'dgucovid'@'localhost' IDENTIFIED BY 'COVID@dgu2020';`
+        1. `GRANT ALL PRIVILEGES ON *.* TO 'dgucovid'@'localhost';`
+        1. `FLUSH PRIVILEGES;`
+
+1. BLAST+ [다운로드](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/)
+    1. bin 폴더 위치를 찾아 환경변수의 path에 추가 `C:\Program Files\NCBI\blast-2.10.1+\bin`
+    1. `makeblastdb -version`, `blastn -version` 두 명령어를 terminal에 입력하여 제대로 설치되었나 확인
+
+1. 깃 레포지토리 클론
+    1. 서브모듈도 다운로드 해야 하기 때문에 아래와 같은 명령어로 클론
+    1. `git clone --recurse-submodules -j8 https://github.com/hayunyun/DGU2020_COVID_back`
+    1. 클론이 완료된 레포지토리 폴더 안에서 terminal을 열어 `python manage.py runserver`이 되나 테스트한 후 `Ctrl+C`로 종료
+
+## 데이터베이스 생성
+
+1. BLAST
+    1. 압축파일 `{repo}/extern/DGU2020_covid_database/database/gisaid_hcov-19_2020_06_29_03.fasta.tar.bz2`를 찾아 압축 해제하여 `gisaid_hcov-19_2020_06_29_03.fasta` 파일을 `database` 폴더 안에 배치
+    1. 레포지토리 루트 폴더에서 terminal을 실행하여 `python manage.py gen_blast_db "./extern/DGU2020_covid_database/database/gisaid_hcov-19_2020_06_29_03.fasta"`를 실행
+    1. `generated blast db successfully`라고 뜨면 성공한 것
+
+1. MySQL
+    1. `populate_mysql_db`는 세 개의 입력 파일을 필요로 하는데, 모두 `{repo}/extern/DGU2020_covid_database/database` 폴더에서 찾을 수 있음
+    1. `python manage.py populate_mysql_db "./extern/DGU2020_covid_database/database/setting.sql" "./extern/DGU2020_covid_database/database/gisaid_hcov-19_2020_06_29_03.fasta" "./extern/DGU2020_covid_database/database/metadata_2020-06-28_21-18.tsv"` 명령어 실행
+
+## 서버 실행
+
+1. `python manage.py runserver`
+1. 웹브라우저를 열어 주소창에 `localhost:8000/api/echo/` 입력
+1. 텍스트를 입력할 수 있는 페이지가 뜨면 성공
