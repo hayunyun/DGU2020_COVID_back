@@ -3,6 +3,8 @@
 import os
 import sys
 
+sys.path.append("./extern/DGU2020_covid_database/src")
+
 
 def main():
     """Run administrative tasks."""
