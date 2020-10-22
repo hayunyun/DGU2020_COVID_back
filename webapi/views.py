@@ -9,19 +9,11 @@ from rest_framework.request import Request
 import dgucovidb.db_interface as bst
 import dgucovidb.sql_interface as sql
 
+from . import konst as cst
 
-# This path is relative to the repo root path where manage.py is located
-BLAST_INTERF = bst.InterfBLAST("./database/blast")
-MYSQL_INTERF = sql.InterfMySQL("dgucovid", "COVID@dgu2020")
 
-KEY_SEQ = "seq"
-KEY_SEQ_ID = "seq_id"
-KEY_SEQ_ID_LIST = "seq_id_list"
-
-KEY_HOW_MANY = "how_many"
-
-KEY_ERROR_CODE = "error_code"
-KEY_ERROR_TEXT = "error_text"
+BLAST_INTERF = bst.InterfBLAST(cst.BLAST_DB_PATH)
+MYSQL_INTERF = sql.InterfMySQL(cst.MYSQL_USERNAME, cst.MYSQL_PASSWORD)
 
 
 class TestList(APIView):
@@ -97,36 +89,36 @@ class GetSimilarSeqIDs(APIView):
             #### Validate client input ####
 
             if not isinstance(request.data, dict):
-                return Response({KEY_ERROR_CODE: 2, KEY_ERROR_TEXT: ERROR_MAP[2]})
+                return Response({cst.KEY_ERROR_CODE: 2, cst.KEY_ERROR_TEXT: ERROR_MAP[2]})
 
             payload: dict = request.data
-            if KEY_SEQ not in payload.keys():
+            if cst.KEY_SEQ not in payload.keys():
                 return Response({
-                    KEY_ERROR_CODE: 3,
-                    KEY_ERROR_TEXT: ERROR_MAP[3].format(KEY_SEQ)
+                    cst.KEY_ERROR_CODE: 3,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[3].format(cst.KEY_SEQ)
                 })
-            if KEY_HOW_MANY not in payload.keys():
+            if cst.KEY_HOW_MANY not in payload.keys():
                 return Response({
-                    KEY_ERROR_CODE: 3,
-                    KEY_ERROR_TEXT: ERROR_MAP[3].format(KEY_HOW_MANY)
+                    cst.KEY_ERROR_CODE: 3,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[3].format(cst.KEY_HOW_MANY)
                 })
 
-            maybe_seq = payload[KEY_SEQ]
+            maybe_seq = payload[cst.KEY_SEQ]
             try:
                 seq = str(maybe_seq)
             except:
                 return Response({
-                    KEY_ERROR_CODE: 4,
-                    KEY_ERROR_TEXT: ERROR_MAP[4].format(KEY_SEQ, "str", type(maybe_seq))
+                    cst.KEY_ERROR_CODE: 4,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[4].format(cst.KEY_SEQ, "str", type(maybe_seq))
                 })
 
-            maybe_how_many = payload[KEY_HOW_MANY]
+            maybe_how_many = payload[cst.KEY_HOW_MANY]
             try:
                 how_many = int(maybe_how_many)
             except:
                 return Response({
-                    KEY_ERROR_CODE: 4,
-                    KEY_ERROR_TEXT: ERROR_MAP[4].format(KEY_HOW_MANY, "int", type(maybe_how_many))
+                    cst.KEY_ERROR_CODE: 4,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[4].format(cst.KEY_HOW_MANY, "int", type(maybe_how_many))
                 })
 
             #### Work ####
@@ -135,7 +127,7 @@ class GetSimilarSeqIDs(APIView):
             print("[] started blast query")
             if not BLAST_INTERF.gen_query_result(seq, result_file_name):
                 os.remove(result_file_name)
-                return Response({KEY_ERROR_CODE: 5, KEY_ERROR_TEXT: ERROR_MAP[5]})
+                return Response({cst.KEY_ERROR_CODE: 5, cst.KEY_ERROR_TEXT: ERROR_MAP[5]})
             print("[] finished blast query")
 
             ids = BLAST_INTERF.find_ids_of_the_similars(result_file_name, how_many)
@@ -143,13 +135,13 @@ class GetSimilarSeqIDs(APIView):
             os.remove(result_file_name)
 
             return Response({
-                KEY_SEQ_ID_LIST: ids,
-                KEY_ERROR_CODE: 0,
+                cst.KEY_SEQ_ID_LIST: ids,
+                cst.KEY_ERROR_CODE: 0,
             })
 
         except:
             traceback.print_exc()
             return Response({
-                KEY_ERROR_CODE: 1,
-                KEY_ERROR_TEXT: ERROR_MAP[1],
+                cst.KEY_ERROR_CODE: 1,
+                cst.KEY_ERROR_TEXT: ERROR_MAP[1],
             })
