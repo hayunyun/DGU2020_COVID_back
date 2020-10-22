@@ -16,12 +16,6 @@ BLAST_INTERF = bst.InterfBLAST(cst.BLAST_DB_PATH)
 MYSQL_INTERF = sql.InterfMySQL(cst.MYSQL_USERNAME, cst.MYSQL_PASSWORD)
 
 
-class TestList(APIView):
-    def get(self, request, format_arg=None):
-        print("BLAST:", BLAST_INTERF.does_db_exists())
-        return Response([1, 2, 3])
-
-
 class Echo(APIView):
     def get(self, request: Request, format_arg=None):
         return Response("No input")
