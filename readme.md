@@ -50,10 +50,11 @@ PW : tbvjdbwj (슈퍼유저 영타에서 그대로 입력)
 ## 환경 설정
 
 1. Python 3 설치
-    1. 필요한 라이브러리 설치
-        1. pip install `django`
-        1. pip install `djangorestframework`
-        1. pip install `django-cors-headers`
+
+1. 필요한 Python 라이브러리 설치
+    1. pip install `django`
+    1. pip install `djangorestframework`
+    1. pip install `django-cors-headers`
 
 1. MySQL [다운로드](https://dev.mysql.com/downloads/installer/)하여 설치
     1. Terminal에서 `mysql` 프로그램을 바로 실행할 수 있도록 환경변수 등 준비
@@ -65,9 +66,22 @@ PW : tbvjdbwj (슈퍼유저 영타에서 그대로 입력)
         1. `GRANT ALL PRIVILEGES ON *.* TO 'dgucovid'@'localhost';`
         1. `FLUSH PRIVILEGES;`
 
-1. BLAST+ [다운로드](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/)
-    1. bin 폴더 위치를 찾아 환경변수의 path에 추가 `C:\Program Files\NCBI\blast-2.10.1+\bin`
+1. BLAST+
+    1. Windows의 경우
+        * [이곳](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/)에서 버전에 맞는 installer를 다운로드
+        * bin 폴더 위치를 찾아 환경변수의 path에 추가
+        * 기본값 : `C:\Program Files\NCBI\blast-2.10.1+\bin`
+    1. Linux의 경우
+        * `sudo apt install ncbi-blast+`
     1. `makeblastdb -version`, `blastn -version` 두 명령어를 terminal에 입력하여 제대로 설치되었나 확인
+
+1. Muscle
+    1. Windows의 경우
+        * [이곳](https://www.drive5.com/muscle/downloads.htm)에서 exe 파일을 다운로드한 뒤, 그 파일이 terminal에서 `muscle` 명령어만으로 실행될 수 있도록 세팅해야 됨
+        * 가장 편한 방법은 파일 이름을 바꾼 뒤 레포 루트 폴더에 넣는 것
+    1. Linux의 경우
+        * `sudo apt install muscle`
+    1. `muscle -version` 명령어를 입력하여 제대로 설치되었나 확인
 
 1. 깃 레포지토리 클론
     1. 서브모듈도 다운로드 해야 하기 때문에 아래와 같은 명령어로 클론
