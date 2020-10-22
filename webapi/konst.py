@@ -4,9 +4,9 @@ MYSQL_USERNAME = "dgucovid"
 MYSQL_PASSWORD = "COVID@dgu2020"
 
 
-KEY_SEQ = "seq"
-KEY_SEQ_ID = "seq_id"
-KEY_SEQ_ID_LIST = "seq_id_list"
+KEY_SEQUENCE = "sequence"
+KEY_ACC_ID = "acc_id"
+KEY_ACC_ID_LIST = "acc_id_list"
 
 KEY_HOW_MANY = "how_many"
 

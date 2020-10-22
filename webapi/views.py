@@ -17,15 +17,18 @@ MYSQL_INTERF = sql.InterfMySQL(cst.MYSQL_USERNAME, cst.MYSQL_PASSWORD)
 
 
 class Echo(APIView):
-    def get(self, request: Request, format_arg=None):
+    @staticmethod
+    def get(request: Request, format_arg=None):
         return Response("No input")
 
-    def post(self, request: Request, format_arg=None):
+    @staticmethod
+    def post(request: Request, format_arg=None):
         return Response(request.data)
 
 
 class SimilarSeqIDs(APIView):
-    def post(self, request: Request, format_arg=None):
+    @staticmethod
+    def post(request: Request, format_arg=None):
         if not isinstance(request.data, dict):
             return Response("invalid input")
 
@@ -59,18 +62,20 @@ class SimilarSeqIDs(APIView):
 class GetSimilarSeqIDs(APIView):
     """
     Requst payload must have following fields
-    * seq: string -> A DNA sequence of covid19
+    * sequence: string -> A DNA sequence of covid19
     * how_many: number ->
 
     On success, it responds with following fields
-    * seq_id_list: array[string] -> List of sequence IDs which represent sequences that are similar to input sequence by client
+    * acc_id_list: array[string] -> List of sequence IDs which represent sequences that are similar to input sequence by client
     * error_code: number -> It should be 0
 
     Meanwhile on failure, the reponse payload contains followings
     * error_code: number -> It can be any integer number but 0
     * error_text: string -> Refer to local variable "ERROR_MAP" for details
     """
-    def post(self, request: Request, format_arg=None):
+
+    @staticmethod
+    def post(request: Request, format_arg=None):
         ERROR_MAP = {
             1: "Unkown error",
             2: "Invalid request payload",
@@ -86,10 +91,10 @@ class GetSimilarSeqIDs(APIView):
                 return Response({cst.KEY_ERROR_CODE: 2, cst.KEY_ERROR_TEXT: ERROR_MAP[2]})
 
             payload: dict = request.data
-            if cst.KEY_SEQ not in payload.keys():
+            if cst.KEY_SEQUENCE not in payload.keys():
                 return Response({
                     cst.KEY_ERROR_CODE: 3,
-                    cst.KEY_ERROR_TEXT: ERROR_MAP[3].format(cst.KEY_SEQ)
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[3].format(cst.KEY_SEQUENCE)
                 })
             if cst.KEY_HOW_MANY not in payload.keys():
                 return Response({
@@ -97,13 +102,13 @@ class GetSimilarSeqIDs(APIView):
                     cst.KEY_ERROR_TEXT: ERROR_MAP[3].format(cst.KEY_HOW_MANY)
                 })
 
-            maybe_seq = payload[cst.KEY_SEQ]
+            maybe_seq = payload[cst.KEY_SEQUENCE]
             try:
                 seq = str(maybe_seq)
             except:
                 return Response({
                     cst.KEY_ERROR_CODE: 4,
-                    cst.KEY_ERROR_TEXT: ERROR_MAP[4].format(cst.KEY_SEQ, "str", type(maybe_seq))
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[4].format(cst.KEY_SEQUENCE, "str", type(maybe_seq))
                 })
 
             maybe_how_many = payload[cst.KEY_HOW_MANY]
@@ -129,7 +134,7 @@ class GetSimilarSeqIDs(APIView):
             os.remove(result_file_name)
 
             return Response({
-                cst.KEY_SEQ_ID_LIST: ids,
+                cst.KEY_ACC_ID_LIST: ids,
                 cst.KEY_ERROR_CODE: 0,
             })
 
