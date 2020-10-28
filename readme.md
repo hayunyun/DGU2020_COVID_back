@@ -71,6 +71,7 @@ PW : tbvjdbwj (슈퍼유저 영타에서 그대로 입력)
         * [이곳](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/)에서 버전에 맞는 installer를 다운로드
         * bin 폴더 위치를 찾아 환경변수의 path에 추가
         * 기본값 : `C:\Program Files\NCBI\blast-2.10.1+\bin`
+        * 환경변수 `BLASTDB_LMDB_MAP_SIZE`를 추가하여 값을 1000000으로 설정
     1. Linux의 경우
         * `sudo apt install ncbi-blast+`
     1. `makeblastdb -version`, `blastn -version` 두 명령어를 terminal에 입력하여 제대로 설치되었나 확인
