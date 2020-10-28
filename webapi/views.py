@@ -137,7 +137,7 @@ class GetSimilarSeqIDs(APIView):
     * how_many: number ->
 
     On success, it responds with following fields
-    * acc_id_list: dcit{ "acc_id": {
+    * acc_id_list: dcit{ acc_id: {
                         "simil_identity": number,
                         "simil_bit_score": number,
                     }} -> List of sequence IDs which represent sequences that are similar to input sequence by client
