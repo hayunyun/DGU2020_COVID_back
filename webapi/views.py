@@ -28,6 +28,7 @@ class ErrorMap:
             4: "Expected '{}' to be a '{}', got '{}' instead",  # Wrong type for a value
             5: "Failed to generate BLAST query result",
             6: "Invalid json syntax",
+            7: "data not found for '{}'",
         })
 
     def __getitem__(self, err_code: int):
@@ -169,7 +170,7 @@ class GetSimilarSeqIDs(APIView):
             print("[] finished blast query")
 
             ids = BLAST_INTERF.find_ids_of_the_similars(result_file_name, how_many)
-            print("[] ids foind: {}".format(ids))
+            print("[] ids found: {}".format(ids))
             os.remove(result_file_name)
 
             return Response({
@@ -220,6 +221,12 @@ class GetMetadataOfSeq(APIView):
             #### Work ####
 
             metadata = MYSQL_INTERF.get_metadata_of(acc_id)
+
+            if metadata is None:
+                return Response({
+                    cst.KEY_ERROR_CODE: 7,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[7].format(acc_id)
+                })
 
             if 0 == len(column_list):
                 result_metadata = metadata
