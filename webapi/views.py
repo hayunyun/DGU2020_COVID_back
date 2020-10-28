@@ -183,3 +183,63 @@ class GetSimilarSeqIDs(APIView):
                 cst.KEY_ERROR_CODE: 1,
                 cst.KEY_ERROR_TEXT: ERROR_MAP[1],
             })
+
+
+class GetMetadataOfSeq(APIView):
+    """
+    Requst payload must have following fields
+    * acc_id: string
+    * column_list: array[string] -> Column names that the user is interested in
+                                    Returns all columns if the array is empty
+
+    On success, it responds with following fields
+    * error_code: number -> It should be 0
+    * metadata: dict[string, optional[string]] -> Map where columns are keys
+                                                  If client provided with invalid column, the value would be null
+
+    Meanwhile on failure, the reponse payload contains followings
+    * error_code: number -> It can be any integer number but 0
+    * error_text: string -> Refer to local variable "ERROR_MAP" for details
+    """
+
+    @staticmethod
+    def post(request: Request, _=None):
+        try:
+            #### Validate client input ####
+
+            validate_result = _validate_request_payload(request, {
+                cst.KEY_ACC_ID: str,
+                cst.KEY_COLUMN_LIST: list,
+            })
+            if validate_result is not None:
+                return Response(validate_result)
+
+            acc_id: str = request.data[cst.KEY_ACC_ID]
+            column_list: list = request.data[cst.KEY_COLUMN_LIST]
+
+            #### Work ####
+
+            metadata = MYSQL_INTERF.get_metadata_of(acc_id)
+
+            if 0 == len(column_list):
+                result_metadata = metadata
+            else:
+                result_metadata = {}
+
+                for requested_column in column_list:
+                    try:
+                        result_metadata[requested_column] = metadata[requested_column]
+                    except KeyError:
+                        result_metadata[requested_column] = None
+
+            return Response({
+                cst.KEY_ERROR_CODE: 0,
+                cst.KEY_METADATA: result_metadata,
+            })
+
+        except:
+            traceback.print_exc()
+            return Response({
+                cst.KEY_ERROR_CODE: 1,
+                cst.KEY_ERROR_TEXT: ERROR_MAP[1],
+            })
