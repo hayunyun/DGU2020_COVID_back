@@ -87,17 +87,17 @@ def _validate_request_payload(req: Request, criteria: Dict[str, Type]) -> Option
 
 class Echo(APIView):
     @staticmethod
-    def get(request: Request, format_arg=None):
+    def get(_: Request, __=None):
         return Response("No input")
 
     @staticmethod
-    def post(request: Request, format_arg=None):
+    def post(request: Request, _=None):
         return Response(request.data)
 
 
 class SimilarSeqIDs(APIView):
     @staticmethod
-    def post(request: Request, format_arg=None):
+    def post(request: Request, _=None):
         if not isinstance(request.data, dict):
             return Response("invalid input")
 
@@ -135,7 +135,8 @@ class GetSimilarSeqIDs(APIView):
     * how_many: number ->
 
     On success, it responds with following fields
-    * acc_id_list: array[string] -> List of sequence IDs which represent sequences that are similar to input sequence by client
+    * acc_id_list: array[string] -> List of sequence IDs which represent sequences that are similar to input sequence
+                                    by client
     * error_code: number -> It should be 0
 
     Meanwhile on failure, the reponse payload contains followings
@@ -144,7 +145,7 @@ class GetSimilarSeqIDs(APIView):
     """
 
     @staticmethod
-    def post(request: Request, format_arg=None):
+    def post(request: Request, _=None):
         try:
             #### Validate client input ####
 
