@@ -64,6 +64,7 @@ def _validate_request_payload(req: Request, criteria: Dict[str, Type]) -> Option
             cst.KEY_ERROR_TEXT: ERROR_MAP[6]
         }
 
+    print(payload)
     if not isinstance(payload, dict):
         return {cst.KEY_ERROR_CODE: 2, cst.KEY_ERROR_TEXT: ERROR_MAP[2]}
 
@@ -136,8 +137,10 @@ class GetSimilarSeqIDs(APIView):
     * how_many: number ->
 
     On success, it responds with following fields
-    * acc_id_list: array[string] -> List of sequence IDs which represent sequences that are similar to input sequence
-                                    by client
+    * acc_id_list: dcit{ "acc_id": {
+                        "simil_identity": number,
+                        "simil_bit_score": number,
+                    }} -> List of sequence IDs which represent sequences that are similar to input sequence by client
     * error_code: number -> It should be 0
 
     Meanwhile on failure, the reponse payload contains followings
@@ -169,12 +172,19 @@ class GetSimilarSeqIDs(APIView):
                 return Response({cst.KEY_ERROR_CODE: 5, cst.KEY_ERROR_TEXT: ERROR_MAP[5]})
             print("[] finished blast query")
 
-            ids = BLAST_INTERF.find_ids_of_the_similars(result_file_name, how_many)
+            ids = BLAST_INTERF.find_similarity_of_the_similars(result_file_name, how_many)
             print("[] ids found: {}".format(ids))
             os.remove(result_file_name)
 
+            result_dict = {}
+            for x, y in ids.items():
+                result_dict[x] = {
+                    cst.KEY_SIMILARITY_IDENTITY: y.identity,
+                    cst.KEY_SIMILARITY_BIT_SCORE: y.bit_score,
+                }
+
             return Response({
-                cst.KEY_ACC_ID_LIST: ids,
+                cst.KEY_ACC_ID_LIST: result_dict,
                 cst.KEY_ERROR_CODE: 0,
             })
 
