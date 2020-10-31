@@ -28,7 +28,8 @@ class ErrorMap:
             4: "Expected '{}' to be a '{}', got '{}' instead",  # Wrong type for a value
             5: "Failed to generate BLAST query result",
             6: "Invalid json syntax",
-            7: "data not found for '{}'",
+            7: "Data not found for '{}'",
+            8: "List length does not match: user input size '{}' != expected size '{}'",
         })
 
     def __getitem__(self, err_code: int):
@@ -252,6 +253,55 @@ class GetMetadataOfSeq(APIView):
             return Response({
                 cst.KEY_ERROR_CODE: 0,
                 cst.KEY_METADATA: result_metadata,
+            })
+
+        except:
+            traceback.print_exc()
+            return Response({
+                cst.KEY_ERROR_CODE: 1,
+                cst.KEY_ERROR_TEXT: ERROR_MAP[1],
+            })
+
+
+class CalcSimilarityOfTwoSeq(APIView):
+    @staticmethod
+    def post(request: Request, _=None):
+        try:
+            #### Validate client input ####
+
+            validate_result = _validate_request_payload(request, {
+                cst.KEY_SEQUENCE_LIST: list,
+            })
+            if validate_result is not None:
+                return Response(validate_result)
+
+            seq_list: list = request.data[cst.KEY_SEQUENCE_LIST]
+
+            if 2 != len(seq_list):
+                return Response({
+                    cst.KEY_ERROR_CODE: 8,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[8].format(len(seq_list), 2)
+                })
+
+            for i in range(2):
+                if not isinstance(seq_list[i], str):
+                    return Response({
+                        cst.KEY_ERROR_CODE: 4,
+                        cst.KEY_ERROR_TEXT: ERROR_MAP[4].format(
+                            "{}[{}]".format(cst.KEY_SEQUENCE_LIST, i), str.__name__, type(seq_list[i]).__name__)
+                    })
+
+            seq_1: str = seq_list[0]
+            seq_2: str = seq_list[1]
+
+            #### Work ####
+
+            simi = BLAST_INTERF.get_similarity_two_seq(seq_1, seq_2)
+
+            return Response({
+                cst.KEY_ERROR_CODE: 0,
+                cst.KEY_SIMILARITY_IDENTITY: simi.identity,
+                cst.KEY_SIMILARITY_BIT_SCORE: simi.bit_score,
             })
 
         except:
