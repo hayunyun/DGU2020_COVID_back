@@ -34,7 +34,7 @@ class SimilarSeqIDs(APIView):
             return Response("invalid input")
 
         try:
-            input_sequence = str(request.data["seq"])
+            input_sequence = str(request.data["sequence"])
             how_many = int(request.data["how_many"])
         except KeyError:
             return Response("no input found")

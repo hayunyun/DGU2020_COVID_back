@@ -1,10 +1,9 @@
-import django.urls as dur
-
+from django.urls import path
 from . import views
 
 
 urlpatterns = [
-    dur.path('testlist/', views.TestList.as_view()),
-    dur.path("echo/", views.Echo.as_view()),
-    dur.path("similar_seq_ids/", views.SimilarSeqIDs.as_view()),
+    path('testlist/', views.TestList.as_view()),
+    path("echo/", views.Echo.as_view()),
+    path("get_similar_seq_ids/", views.SimilarSeqIDs.as_view()),
 ]
