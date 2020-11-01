@@ -2,6 +2,7 @@ import os
 import traceback
 from typing import Dict, Type, Optional
 
+import pymysql
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -30,6 +31,7 @@ class ErrorMap:
             6: "Invalid json syntax",
             7: "Data not found for '{}'",
             8: "List length does not match: user input size '{}' != expected size '{}'",
+            9: "MySQL operation error: {}",
         })
 
     def __getitem__(self, err_code: int):
@@ -65,7 +67,6 @@ def _validate_request_payload(req: Request, criteria: Dict[str, Type]) -> Option
             cst.KEY_ERROR_TEXT: ERROR_MAP[6]
         }
 
-    print(payload)
     if not isinstance(payload, dict):
         return {cst.KEY_ERROR_CODE: 2, cst.KEY_ERROR_TEXT: ERROR_MAP[2]}
 
@@ -231,7 +232,13 @@ class GetMetadataOfSeq(APIView):
 
             #### Work ####
 
-            metadata = MYSQL_INTERF.get_metadata_of(acc_id)
+            try:
+                metadata = MYSQL_INTERF.get_metadata_of(acc_id)
+            except pymysql.err.OperationalError as e:
+                return Response({
+                    cst.KEY_ERROR_CODE: 9,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[9].format(str(e))
+                })
 
             if metadata is None:
                 return Response({
