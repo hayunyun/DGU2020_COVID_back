@@ -7,7 +7,7 @@ import webapi.konst as cst
 
 
 API_ENDPOINT = "http://localhost:8000/api/"
-DB_DATA_PATH = "./../extern/DGU2020_covid_database/database"
+DB_DATA_PATH = "C:\\Users\\woos8\\Documents\\GitHub\\DGU2020_covid_database\\database"
 
 
 def _send_post_req(url, data):
@@ -22,34 +22,26 @@ def _send_post_req(url, data):
 
 class TestWebAPI(unittest.TestCase):
     def test_get_similar_seq_ids(self):
-        expected_result = {
-            'acc_id_list': {
-                'EPI_ISL_426879': {'simil_identity': 100.0, 'simil_bit_score': 51926},
-                'EPI_ISL_468579': {'simil_identity': 99.86518129567871, 'simil_bit_score': 51915},
-                'EPI_ISL_454326': {'simil_identity': 99.86518129567871, 'simil_bit_score': 51915},
-                'EPI_ISL_454625': {'simil_identity': 99.86518129567871, 'simil_bit_score': 51915},
-                'EPI_ISL_454631': {'simil_identity': 99.86518129567871, 'simil_bit_score': 51915},
-                'EPI_ISL_454334': {'simil_identity': 99.86518129567871, 'simil_bit_score': 51915},
-                'EPI_ISL_454335': {'simil_identity': 99.86518129567871, 'simil_bit_score': 51915},
-                'EPI_ISL_468948': {'simil_identity': 99.86518129567871, 'simil_bit_score': 51915},
-                'EPI_ISL_420993': {'simil_identity': 99.86518129567871, 'simil_bit_score': 51915},
-                'EPI_ISL_468921': {'simil_identity': 99.86518129567871, 'simil_bit_score': 51915}
-            },
-            'error_code': 0
-        }
+        file_list = (
+            "wuhan.fasta",
+            "versus.fasta",
+            "first_test_data.fasta",
+            "second_test_data.fasta",
+        )
 
-        with open(os.path.join(DB_DATA_PATH, "first_test_data.fasta"), "r") as file:
-            fasta_str = file.read()
+        for file_name in file_list:
+            print(file_name)
+            with open(os.path.join(DB_DATA_PATH, file_name), "r") as file:
+                fasta_str = file.read()
 
-        response_data = _send_post_req(API_ENDPOINT + "get_similar_seq_ids/", {
-            cst.KEY_SEQUENCE: fasta_str,
-            cst.KEY_HOW_MANY: 10,
-        })
+            response_data = _send_post_req(API_ENDPOINT + "get_similar_seq_ids/", {
+                cst.KEY_SEQUENCE: fasta_str,
+                cst.KEY_HOW_MANY: 10,
+            })
+            print(response_data)
 
-        self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
-        self.assertEqual(len(response_data[cst.KEY_ACC_ID_LIST]), 10)
-        for x in response_data[cst.KEY_ACC_ID_LIST].keys():
-            self.assertTrue(x in expected_result[cst.KEY_ACC_ID_LIST].keys())
+            self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
+            self.assertEqual(len(response_data[cst.KEY_ACC_ID_LIST]), 10)
 
     def test_get_metadata_of_seq(self):
         acc_id = "EPI_ISL_426879"
@@ -59,6 +51,7 @@ class TestWebAPI(unittest.TestCase):
         }
 
         response_data = _send_post_req(API_ENDPOINT + "get_metadata_of_seq/", params)
+        print(response_data[cst.KEY_METADATA])
 
         self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
         self.assertEqual(response_data[cst.KEY_METADATA]["acc_id"], acc_id)
