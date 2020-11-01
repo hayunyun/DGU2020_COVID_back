@@ -1,4 +1,5 @@
 import os
+import time
 import traceback
 from typing import Dict, Type, Optional
 
@@ -10,6 +11,7 @@ from rest_framework.exceptions import ParseError
 
 import dgucovidb.db_interface as bst
 import dgucovidb.sql_interface as sql
+import dgucovidb.tmpCreator_interface as tmpFile
 
 from . import konst as cst
 
@@ -167,16 +169,14 @@ class GetSimilarSeqIDs(APIView):
 
             #### Work ####
 
-            result_file_name = "result.tmp"
+            result_file_name = tmpFile.TmpFileName("result-{}.txt".format(time.time()))
             print("[] started blast query")
-            if not BLAST_INTERF.gen_query_result(seq, result_file_name):
-                os.remove(result_file_name)
+            if not BLAST_INTERF.gen_query_result(seq, result_file_name.name):
                 return Response({cst.KEY_ERROR_CODE: 5, cst.KEY_ERROR_TEXT: ERROR_MAP[5]})
             print("[] finished blast query")
 
-            ids = BLAST_INTERF.find_similarity_of_the_similars(result_file_name, how_many)
-            print("[] ids found: {}".format(ids))
-            os.remove(result_file_name)
+            ids = BLAST_INTERF.find_similarity_of_the_similars(result_file_name.name, how_many)
+            print("[] ids found: {}".format(ids.keys()))
 
             result_dict = {}
             for x, y in ids.items():
