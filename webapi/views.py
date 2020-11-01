@@ -81,7 +81,7 @@ def _validate_request_payload(req: Request, criteria: Dict[str, Type]) -> Option
             return {
                 cst.KEY_ERROR_CODE: 4,
                 cst.KEY_ERROR_TEXT: ERROR_MAP[4].format(
-                    cst.KEY_HOW_MANY, value_type.__name__, type(maybe_value).__name__
+                    key_name, value_type.__name__, type(maybe_value).__name__
                 )
             }
 
