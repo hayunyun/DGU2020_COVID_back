@@ -11,6 +11,7 @@ from rest_framework.exceptions import ParseError
 
 import dgucovidb.db_interface as bst
 import dgucovidb.sql_interface as sql
+import dgucovidb.fasta_tool as fat
 import dgucovidb.tmpCreator_interface as tmpFile
 
 from . import konst as cst
@@ -34,6 +35,7 @@ class ErrorMap:
             7: "Data not found for '{}'",
             8: "List length does not match: user input size '{}' != expected size '{}'",
             9: "MySQL operation error: {}",
+            10: "Your input '{}' is not a DNA sequence",
         })
 
     def __getitem__(self, err_code: int):
@@ -166,6 +168,12 @@ class GetSimilarSeqIDs(APIView):
 
             seq = str(request.data[cst.KEY_SEQUENCE])
             how_many = int(request.data[cst.KEY_HOW_MANY])
+
+            if not fat.is_str_dna_seq(seq):
+                return Response({
+                    cst.KEY_ERROR_CODE: 10,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[10].format(cst.KEY_SEQUENCE)
+                })
 
             #### Work ####
 
@@ -300,6 +308,17 @@ class CalcSimilarityOfTwoSeq(APIView):
 
             seq_1: str = seq_list[0]
             seq_2: str = seq_list[1]
+
+            if not fat.is_str_dna_seq(seq_1):
+                return Response({
+                    cst.KEY_ERROR_CODE: 10,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[10].format("{}[{}]".format(cst.KEY_SEQUENCE_LIST, 0))
+                })
+            if not fat.is_str_dna_seq(seq_2):
+                return Response({
+                    cst.KEY_ERROR_CODE: 10,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[10].format("{}[{}]".format(cst.KEY_SEQUENCE_LIST, 1))
+                })
 
             #### Work ####
 
