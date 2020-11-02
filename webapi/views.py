@@ -21,6 +21,21 @@ BLAST_INTERF = bst.InterfBLAST(cst.BLAST_DB_PATH)
 MYSQL_INTERF = sql.InterfMySQL(cst.MYSQL_USERNAME, cst.MYSQL_PASSWORD)
 
 
+def _convert_to_seq_if_fasta(maybe_seq) -> Optional[str]:
+    if isinstance(maybe_seq, str):
+        if fat.is_str_dna_seq(maybe_seq):
+            return maybe_seq
+
+        fasta_data = fat.parse_fasta_str(maybe_seq)
+        if 1 != len(fasta_data):
+            return None
+
+        if fat.is_str_dna_seq(fasta_data[0].sequence):
+            return fasta_data[0].sequence
+
+    return None
+
+
 class ErrorMap:
     def __init__(self):
         self.__map: Dict[int, str] = {}
@@ -170,14 +185,15 @@ class GetSimilarSeqIDs(APIView):
             if validate_result is not None:
                 return Response(validate_result)
 
-            seq = str(request.data[cst.KEY_SEQUENCE])
             how_many = int(request.data[cst.KEY_HOW_MANY])
 
-            if not fat.is_str_dna_seq(seq):
+            maybe_valid_seq = _convert_to_seq_if_fasta(request.data[cst.KEY_SEQUENCE])
+            if maybe_valid_seq is None:
                 return Response({
                     cst.KEY_ERROR_CODE: 10,
                     cst.KEY_ERROR_TEXT: ERROR_MAP[10].format(cst.KEY_SEQUENCE)
                 })
+            seq: str = maybe_valid_seq
 
             #### Work ####
 
@@ -310,19 +326,19 @@ class CalcSimilarityOfTwoSeq(APIView):
                             "{}[{}]".format(cst.KEY_SEQUENCE_LIST, i), str.__name__, type(seq_list[i]).__name__)
                     })
 
-            seq_1: str = seq_list[0]
-            seq_2: str = seq_list[1]
+            valid_seq_list = []
+            for i in range(2):
+                maybe_valid_seq = _convert_to_seq_if_fasta(seq_list[i])
+                if maybe_valid_seq is None:
+                    return Response({
+                        cst.KEY_ERROR_CODE: 10,
+                        cst.KEY_ERROR_TEXT: ERROR_MAP[10].format("{}[{}]".format(cst.KEY_SEQUENCE_LIST, i))
+                    })
+                else:
+                    valid_seq_list.append(maybe_valid_seq)
 
-            if not fat.is_str_dna_seq(seq_1):
-                return Response({
-                    cst.KEY_ERROR_CODE: 10,
-                    cst.KEY_ERROR_TEXT: ERROR_MAP[10].format("{}[{}]".format(cst.KEY_SEQUENCE_LIST, 0))
-                })
-            if not fat.is_str_dna_seq(seq_2):
-                return Response({
-                    cst.KEY_ERROR_CODE: 10,
-                    cst.KEY_ERROR_TEXT: ERROR_MAP[10].format("{}[{}]".format(cst.KEY_SEQUENCE_LIST, 1))
-                })
+            seq_1 = valid_seq_list[0]
+            seq_2 = valid_seq_list[1]
 
             #### Work ####
 
