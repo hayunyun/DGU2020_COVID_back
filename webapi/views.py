@@ -1,7 +1,9 @@
 import os
+import time
 import traceback
 from typing import Dict, Type, Optional
 
+import pymysql
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -9,12 +11,29 @@ from rest_framework.exceptions import ParseError
 
 import dgucovidb.db_interface as bst
 import dgucovidb.sql_interface as sql
+import dgucovidb.fasta_tool as fat
+import dgucovidb.tmpCreator_interface as tmpFile
 
 from . import konst as cst
 
 
 BLAST_INTERF = bst.InterfBLAST(cst.BLAST_DB_PATH)
 MYSQL_INTERF = sql.InterfMySQL(cst.MYSQL_USERNAME, cst.MYSQL_PASSWORD)
+
+
+def _convert_to_seq_if_fasta(maybe_seq) -> Optional[str]:
+    if isinstance(maybe_seq, str):
+        if fat.is_str_dna_seq(maybe_seq):
+            return maybe_seq
+
+        fasta_data = fat.parse_fasta_str(maybe_seq)
+        if 1 != len(fasta_data):
+            return None
+
+        if fat.is_str_dna_seq(fasta_data[0].sequence):
+            return fasta_data[0].sequence
+
+    return None
 
 
 class ErrorMap:
@@ -28,7 +47,10 @@ class ErrorMap:
             4: "Expected '{}' to be a '{}', got '{}' instead",  # Wrong type for a value
             5: "Failed to generate BLAST query result",
             6: "Invalid json syntax",
-            7: "data not found for '{}'",
+            7: "Data not found for '{}'",
+            8: "List length does not match: user input size '{}' != expected size '{}'",
+            9: "MySQL operation error: {}",
+            10: "Your input '{}' is not a DNA sequence",
         })
 
     def __getitem__(self, err_code: int):
@@ -64,7 +86,6 @@ def _validate_request_payload(req: Request, criteria: Dict[str, Type]) -> Option
             cst.KEY_ERROR_TEXT: ERROR_MAP[6]
         }
 
-    print(payload)
     if not isinstance(payload, dict):
         return {cst.KEY_ERROR_CODE: 2, cst.KEY_ERROR_TEXT: ERROR_MAP[2]}
 
@@ -80,7 +101,7 @@ def _validate_request_payload(req: Request, criteria: Dict[str, Type]) -> Option
             return {
                 cst.KEY_ERROR_CODE: 4,
                 cst.KEY_ERROR_TEXT: ERROR_MAP[4].format(
-                    cst.KEY_HOW_MANY, value_type.__name__, type(maybe_value).__name__
+                    key_name, value_type.__name__, type(maybe_value).__name__
                 )
             }
 
@@ -98,6 +119,10 @@ class Echo(APIView):
 
 
 class SimilarSeqIDs(APIView):
+    """
+    This class has been deprecated.
+    Please don't use it or try to improve it.
+    """
     @staticmethod
     def post(request: Request, _=None):
         if not isinstance(request.data, dict):
@@ -160,21 +185,26 @@ class GetSimilarSeqIDs(APIView):
             if validate_result is not None:
                 return Response(validate_result)
 
-            seq = str(request.data[cst.KEY_SEQUENCE])
             how_many = int(request.data[cst.KEY_HOW_MANY])
+
+            maybe_valid_seq = _convert_to_seq_if_fasta(request.data[cst.KEY_SEQUENCE])
+            if maybe_valid_seq is None:
+                return Response({
+                    cst.KEY_ERROR_CODE: 10,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[10].format(cst.KEY_SEQUENCE)
+                })
+            seq: str = maybe_valid_seq
 
             #### Work ####
 
-            result_file_name = "result.tmp"
+            result_file_name = tmpFile.TmpFileName("result-{}.txt".format(time.time()))
             print("[] started blast query")
-            if not BLAST_INTERF.gen_query_result(seq, result_file_name):
-                os.remove(result_file_name)
+            if not BLAST_INTERF.gen_query_result(seq, result_file_name.name):
                 return Response({cst.KEY_ERROR_CODE: 5, cst.KEY_ERROR_TEXT: ERROR_MAP[5]})
             print("[] finished blast query")
 
-            ids = BLAST_INTERF.find_similarity_of_the_similars(result_file_name, how_many)
-            print("[] ids found: {}".format(ids))
-            os.remove(result_file_name)
+            ids = BLAST_INTERF.find_similarity_of_the_similars(result_file_name.name, how_many)
+            print("[] ids found: {}".format(ids.keys()))
 
             result_dict = {}
             for x, y in ids.items():
@@ -230,7 +260,13 @@ class GetMetadataOfSeq(APIView):
 
             #### Work ####
 
-            metadata = MYSQL_INTERF.get_metadata_of(acc_id)
+            try:
+                metadata = MYSQL_INTERF.get_metadata_of(acc_id)
+            except pymysql.err.OperationalError as e:
+                return Response({
+                    cst.KEY_ERROR_CODE: 9,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[9].format(str(e))
+                })
 
             if metadata is None:
                 return Response({
@@ -252,6 +288,66 @@ class GetMetadataOfSeq(APIView):
             return Response({
                 cst.KEY_ERROR_CODE: 0,
                 cst.KEY_METADATA: result_metadata,
+            })
+
+        except:
+            traceback.print_exc()
+            return Response({
+                cst.KEY_ERROR_CODE: 1,
+                cst.KEY_ERROR_TEXT: ERROR_MAP[1],
+            })
+
+
+class CalcSimilarityOfTwoSeq(APIView):
+    @staticmethod
+    def post(request: Request, _=None):
+        try:
+            #### Validate client input ####
+
+            validate_result = _validate_request_payload(request, {
+                cst.KEY_SEQUENCE_LIST: list,
+            })
+            if validate_result is not None:
+                return Response(validate_result)
+
+            seq_list: list = request.data[cst.KEY_SEQUENCE_LIST]
+
+            if 2 != len(seq_list):
+                return Response({
+                    cst.KEY_ERROR_CODE: 8,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[8].format(len(seq_list), 2)
+                })
+
+            for i in range(2):
+                if not isinstance(seq_list[i], str):
+                    return Response({
+                        cst.KEY_ERROR_CODE: 4,
+                        cst.KEY_ERROR_TEXT: ERROR_MAP[4].format(
+                            "{}[{}]".format(cst.KEY_SEQUENCE_LIST, i), str.__name__, type(seq_list[i]).__name__)
+                    })
+
+            valid_seq_list = []
+            for i in range(2):
+                maybe_valid_seq = _convert_to_seq_if_fasta(seq_list[i])
+                if maybe_valid_seq is None:
+                    return Response({
+                        cst.KEY_ERROR_CODE: 10,
+                        cst.KEY_ERROR_TEXT: ERROR_MAP[10].format("{}[{}]".format(cst.KEY_SEQUENCE_LIST, i))
+                    })
+                else:
+                    valid_seq_list.append(maybe_valid_seq)
+
+            seq_1 = valid_seq_list[0]
+            seq_2 = valid_seq_list[1]
+
+            #### Work ####
+
+            simi = BLAST_INTERF.get_similarity_two_seq(seq_1, seq_2)
+
+            return Response({
+                cst.KEY_ERROR_CODE: 0,
+                cst.KEY_SIMILARITY_IDENTITY: simi.identity,
+                cst.KEY_SIMILARITY_BIT_SCORE: simi.bit_score,
             })
 
         except:

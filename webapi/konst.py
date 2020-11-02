@@ -5,6 +5,7 @@ MYSQL_PASSWORD = "COVID@dgu2020"
 
 
 KEY_SEQUENCE = "sequence"
+KEY_SEQUENCE_LIST = "sequence_list"
 KEY_ACC_ID = "acc_id"
 KEY_ACC_ID_LIST = "acc_id_list"
 KEY_COLUMN_LIST = "column_list"

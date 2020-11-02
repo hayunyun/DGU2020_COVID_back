@@ -1,0 +1,75 @@
+import os
+import json
+import unittest
+import requests
+
+import webapi.konst as cst
+
+
+API_ENDPOINT = "http://localhost:8000/api/"
+DB_DATA_PATH = "C:\\Users\\woos8\\Documents\\GitHub\\DGU2020_covid_database\\database"
+
+
+def _send_post_req(url, data):
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+
+    r = requests.post(url=url, json=data, headers=headers)
+    return json.loads(r.text)
+
+
+class TestWebAPI(unittest.TestCase):
+    def test_get_similar_seq_ids(self):
+        file_list = (
+            "wuhan.fasta",
+            "versus.fasta",
+            "first_test_data.fasta",
+            "second_test_data.fasta",
+        )
+
+        for file_name in file_list:
+            print(file_name)
+            with open(os.path.join(DB_DATA_PATH, file_name), "r") as file:
+                fasta_str = file.read()
+
+            response_data = _send_post_req(API_ENDPOINT + "get_similar_seq_ids/", {
+                cst.KEY_SEQUENCE: fasta_str,
+                cst.KEY_HOW_MANY: 10,
+            })
+            print(response_data)
+
+            self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
+            self.assertEqual(len(response_data[cst.KEY_ACC_ID_LIST]), 10)
+
+    def test_get_metadata_of_seq(self):
+        acc_id = "EPI_ISL_426879"
+        params = {
+            cst.KEY_ACC_ID: acc_id,
+            cst.KEY_COLUMN_LIST: [],
+        }
+
+        response_data = _send_post_req(API_ENDPOINT + "get_metadata_of_seq/", params)
+        print(response_data[cst.KEY_METADATA])
+
+        self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
+        self.assertEqual(response_data[cst.KEY_METADATA]["acc_id"], acc_id)
+
+    def test_calc_similarity_of_two_seq(self):
+        with open(os.path.join(DB_DATA_PATH, "wuhan.fasta"), "r") as file:
+            seq_1 = file.read()
+        with open(os.path.join(DB_DATA_PATH, "versus.fasta"), "r") as file:
+            seq_2 = file.read()
+
+        response_data = _send_post_req(API_ENDPOINT + "calc_similarity_of_two_seq/", {
+            cst.KEY_SEQUENCE_LIST: [seq_1, seq_2]
+        })
+
+        self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
+        self.assertEqual(int(response_data[cst.KEY_SIMILARITY_IDENTITY]), 99)
+        self.assertEqual(int(response_data[cst.KEY_SIMILARITY_BIT_SCORE]), 55231)
+
+
+if __name__ == '__main__':
+    unittest.main()
