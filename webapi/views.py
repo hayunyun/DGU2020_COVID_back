@@ -104,6 +104,10 @@ class Echo(APIView):
 
 
 class SimilarSeqIDs(APIView):
+    """
+    This class has been deprecated.
+    Please don't use it or try to improve it.
+    """
     @staticmethod
     def post(request: Request, _=None):
         if not isinstance(request.data, dict):
