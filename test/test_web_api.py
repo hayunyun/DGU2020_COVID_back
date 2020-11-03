@@ -9,14 +9,17 @@ import webapi.konst as cst
 API_ENDPOINT = "http://localhost:8000/api/"
 DB_DATA_PATH = "C:\\Users\\woos8\\Documents\\GitHub\\DGU2020_covid_database\\database"
 
+REQUEST_HEADER = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+}
 
 def _send_post_req(url, data):
-    headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    }
+    r = requests.post(url=url, json=data, headers=REQUEST_HEADER)
+    return json.loads(r.text)
 
-    r = requests.post(url=url, json=data, headers=headers)
+def _send_get_req(url, data=None):
+    r = requests.get(url=url, json=data, headers=REQUEST_HEADER)
     return json.loads(r.text)
 
 
@@ -69,6 +72,14 @@ class TestWebAPI(unittest.TestCase):
         self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
         self.assertEqual(int(response_data[cst.KEY_SIMILARITY_IDENTITY]), 99)
         self.assertEqual(int(response_data[cst.KEY_SIMILARITY_BIT_SCORE]), 55231)
+
+    def test_get_all_acc_ids(self):
+        response_data = _send_get_req(API_ENDPOINT + "get_all_acc_ids/")
+        acc_id_list = response_data[cst.KEY_ACC_ID_LIST]
+
+        self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
+        print(acc_id_list)
+        self.assertTrue(len(acc_id_list) > 1000)
 
 
 if __name__ == '__main__':
