@@ -356,3 +356,24 @@ class CalcSimilarityOfTwoSeq(APIView):
                 cst.KEY_ERROR_CODE: 1,
                 cst.KEY_ERROR_TEXT: ERROR_MAP[1],
             })
+
+
+class GetAllAccIDs(APIView):
+    @staticmethod
+    def get(request: Request, _=None):
+        try:
+            #### Work ####
+
+            acc_id_list = MYSQL_INTERF.get_all_acc_ids()
+
+            return Response({
+                cst.KEY_ERROR_CODE: 0,
+                cst.KEY_ACC_ID_LIST: acc_id_list,
+            })
+
+        except:
+            traceback.print_exc()
+            return Response({
+                cst.KEY_ERROR_CODE: 1,
+                cst.KEY_ERROR_TEXT: ERROR_MAP[1],
+            })
