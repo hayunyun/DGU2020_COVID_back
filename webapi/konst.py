@@ -10,6 +10,7 @@ KEY_ACC_ID = "acc_id"
 KEY_ACC_ID_LIST = "acc_id_list"
 KEY_COLUMN_LIST = "column_list"
 KEY_METADATA = "metadata"
+KEY_RESULT = "result"
 
 KEY_SIMILARITY_IDENTITY = "simil_identity"
 KEY_SIMILARITY_BIT_SCORE = "simil_bit_score"

@@ -1,5 +1,6 @@
 import os
 import time
+import shutil
 import traceback
 from typing import Dict, Type, Optional
 
@@ -13,6 +14,7 @@ import dgucovidb.db_interface as bst
 import dgucovidb.sql_interface as sql
 import dgucovidb.fasta_tool as fat
 import dgucovidb.tmpCreator_interface as tmpFile
+import dgucovidb.mutation_interface as mut
 
 from . import konst as cst
 
@@ -369,6 +371,85 @@ class GetAllAccIDs(APIView):
             return Response({
                 cst.KEY_ERROR_CODE: 0,
                 cst.KEY_ACC_ID_LIST: acc_id_list,
+            })
+
+        except:
+            traceback.print_exc()
+            return Response({
+                cst.KEY_ERROR_CODE: 1,
+                cst.KEY_ERROR_TEXT: ERROR_MAP[1],
+            })
+
+
+class FindMutations(APIView):
+    @staticmethod
+    def get(request: Request, _=None):
+        try:
+            #### Validate client input ####
+
+            validate_result = _validate_request_payload(request, {
+                cst.KEY_SEQUENCE_LIST: list,
+            })
+            if validate_result is not None:
+                return Response(validate_result)
+
+            seq_list: list = request.data[cst.KEY_SEQUENCE_LIST]
+
+            if 2 != len(seq_list):
+                return Response({
+                    cst.KEY_ERROR_CODE: 8,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[8].format(len(seq_list), 2)
+                })
+
+            for i in range(2):
+                if not isinstance(seq_list[i], str):
+                    return Response({
+                        cst.KEY_ERROR_CODE: 4,
+                        cst.KEY_ERROR_TEXT: ERROR_MAP[4].format(
+                            "{}[{}]".format(cst.KEY_SEQUENCE_LIST, i), str.__name__, type(seq_list[i]).__name__)
+                    })
+
+            valid_seq_list = []
+            for i in range(2):
+                maybe_valid_seq = _convert_to_seq_if_fasta(seq_list[i])
+                if maybe_valid_seq is None:
+                    return Response({
+                        cst.KEY_ERROR_CODE: 10,
+                        cst.KEY_ERROR_TEXT: ERROR_MAP[10].format("{}[{}]".format(cst.KEY_SEQUENCE_LIST, i))
+                    })
+                else:
+                    valid_seq_list.append(maybe_valid_seq)
+
+            seq_list = [
+                valid_seq_list[0],
+                valid_seq_list[1],
+            ]
+
+            #### Work ####
+
+            temp_file_names = [
+                "./tmp/one-{}.tmp".format(time.time()),
+                "./tmp/two-{}.tmp".format(time.time()),
+            ]
+            if not os.path.isdir("./tmp"):
+                os.mkdir("./tmp")
+
+            for i in range(2):
+                seq_fasta = fat.parse_fasta_str(seq_list[i])
+                assert 1 == len(seq_fasta)
+
+                with open(temp_file_names[i], "w") as file:
+                    file.write(seq_fasta[0].export_text())
+
+            mut_func = mut.InterfMutation(".", "wuhan")
+            result = mut_func.get_mutation(temp_file_names[0], temp_file_names[1])
+
+            if os.path.isdir("./tmp"):
+                shutil.rmtree("./tmp")
+
+            return Response({
+                cst.KEY_ERROR_CODE: 0,
+                cst.KEY_RESULT: result,
             })
 
         except:
