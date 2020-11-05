@@ -14,6 +14,13 @@ REQUEST_HEADER = {
     'Accept': 'application/json'
 }
 
+TEST_SEQ_FILE_NAMES = (
+    "wuhan.fasta",
+    "versus.fasta",
+    "first_test_data.fasta",
+    "second_test_data.fasta",
+)
+
 def _send_post_req(url, data):
     r = requests.post(url=url, json=data, headers=REQUEST_HEADER)
     return json.loads(r.text)
@@ -25,14 +32,9 @@ def _send_get_req(url, data=None):
 
 class TestWebAPI(unittest.TestCase):
     def test_get_similar_seq_ids(self):
-        file_list = (
-            "wuhan.fasta",
-            "versus.fasta",
-            "first_test_data.fasta",
-            "second_test_data.fasta",
-        )
+        # It failes with 'second_test_data.fasta'
 
-        for file_name in file_list:
+        for file_name in TEST_SEQ_FILE_NAMES:
             print(file_name)
             with open(os.path.join(DB_DATA_PATH, file_name), "r") as file:
                 fasta_str = file.read()
