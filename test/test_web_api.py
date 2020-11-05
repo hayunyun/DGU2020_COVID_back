@@ -83,6 +83,25 @@ class TestWebAPI(unittest.TestCase):
         print(acc_id_list)
         self.assertTrue(len(acc_id_list) > 1000)
 
+    def test_find_mutations(self):
+        for i in range(len(TEST_SEQ_FILE_NAMES)):
+            for j in range(i + 1, len(TEST_SEQ_FILE_NAMES)):
+                name_1 = TEST_SEQ_FILE_NAMES[i]
+                name_2 = TEST_SEQ_FILE_NAMES[j]
+                print("'{}' vs '{}'".format(name_1, name_2))
+
+                with open(os.path.join(DB_DATA_PATH, name_1), "r") as file:
+                    seq_1 = file.read()
+                with open(os.path.join(DB_DATA_PATH, name_2), "r") as file:
+                    seq_2 = file.read()
+
+                response_data = _send_get_req(API_ENDPOINT + "find_mutations/", {
+                    cst.KEY_SEQUENCE_LIST: [seq_1, seq_2],
+                })
+
+                self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
+                print(response_data)
+
 
 if __name__ == '__main__':
     unittest.main()
