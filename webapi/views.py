@@ -2,7 +2,7 @@ import os
 import time
 import shutil
 import traceback
-from typing import Dict, Type, Optional
+from typing import Dict, Type, Optional, List
 
 import pymysql
 from rest_framework.views import APIView
@@ -382,8 +382,8 @@ class GetAllAccIDs(APIView):
 
 
 class FindMutations(APIView):
-    @staticmethod
-    def post(request: Request, _=None):
+    @classmethod
+    def post(cls, request: Request, _=None):
         try:
             #### Validate client input ####
 
@@ -443,13 +443,15 @@ class FindMutations(APIView):
 
             mut_func = mut.InterfMutation(".", "wuhan")
             result = mut_func.get_mutation(temp_file_names[0], temp_file_names[1])
+            changes, indels = cls.__reconstruct_mutation_list(result)
 
             if os.path.isdir("./tmp"):
                 shutil.rmtree("./tmp")
 
             return Response({
                 cst.KEY_ERROR_CODE: 0,
-                cst.KEY_RESULT: result,
+                cst.KEY_MUT_CHANGE_LIST: changes,
+                cst.KEY_MUT_INDEL_LIST: indels,
             })
 
         except:
@@ -458,3 +460,28 @@ class FindMutations(APIView):
                 cst.KEY_ERROR_CODE: 1,
                 cst.KEY_ERROR_TEXT: ERROR_MAP[1],
             })
+
+    @staticmethod
+    def __reconstruct_mutation_list(mut_list: list):
+        change_list: List[str, str, int] = []
+        indel_list: List[str, str] = []
+
+        for x in mut_list:
+            if 3 == len(x):
+                assert isinstance(x[0], str)
+                assert isinstance(x[1], str)
+                assert isinstance(x[2], int)
+
+                change_list.append(x)
+
+            elif 2 == len(x):
+                assert isinstance(x[0], str)
+                assert isinstance(x[1], str)
+
+                indel_list.append(x)
+
+            else:
+                assert False
+                pass
+
+        return change_list, indel_list

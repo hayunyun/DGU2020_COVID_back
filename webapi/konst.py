@@ -16,5 +16,8 @@ KEY_SIMILARITY_IDENTITY = "simil_identity"
 KEY_SIMILARITY_BIT_SCORE = "simil_bit_score"
 KEY_HOW_MANY = "how_many"
 
+KEY_MUT_CHANGE_LIST = "mut_change_list"
+KEY_MUT_INDEL_LIST = "mut_indel_list"
+
 KEY_ERROR_CODE = "error_code"
 KEY_ERROR_TEXT = "error_text"
