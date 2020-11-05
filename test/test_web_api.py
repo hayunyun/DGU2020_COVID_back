@@ -95,7 +95,7 @@ class TestWebAPI(unittest.TestCase):
                 with open(os.path.join(DB_DATA_PATH, name_2), "r") as file:
                     seq_2 = file.read()
 
-                response_data = _send_get_req(API_ENDPOINT + "find_mutations/", {
+                response_data = _send_post_req(API_ENDPOINT + "find_mutations/", {
                     cst.KEY_SEQUENCE_LIST: [seq_1, seq_2],
                 })
 

@@ -383,7 +383,7 @@ class GetAllAccIDs(APIView):
 
 class FindMutations(APIView):
     @staticmethod
-    def get(request: Request, _=None):
+    def post(request: Request, _=None):
         try:
             #### Validate client input ####
 
