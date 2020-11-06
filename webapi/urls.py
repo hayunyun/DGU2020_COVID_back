@@ -8,4 +8,6 @@ urlpatterns = [
     dur.path("get_similar_seq_ids/", views.GetSimilarSeqIDs.as_view()),
     dur.path("get_metadata_of_seq/", views.GetMetadataOfSeq.as_view()),
     dur.path("calc_similarity_of_two_seq/", views.CalcSimilarityOfTwoSeq.as_view()),
+    dur.path("get_all_acc_ids/", views.GetAllAccIDs.as_view()),
+    dur.path("find_mutations/", views.FindMutations.as_view()),
 ]
