@@ -362,11 +362,11 @@ class CalcSimilarityOfTwoSeq(APIView):
 
 class GetAllAccIDs(APIView):
     @staticmethod
-    def get(request: Request, _=None):
+    def get(_: Request, __=None):
         try:
             #### Work ####
 
-            acc_id_list = MYSQL_INTERF.get_all_acc_ids()
+            acc_id_list = MYSQL_INTERF.get_all_strains()
 
             return Response({
                 cst.KEY_ERROR_CODE: 0,
