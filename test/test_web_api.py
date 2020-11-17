@@ -49,7 +49,7 @@ class TestWebAPI(unittest.TestCase):
             self.assertEqual(len(response_data[cst.KEY_ACC_ID_LIST]), 10)
 
     def test_get_metadata_of_seq(self):
-        acc_id = "EPI_ISL_426879"
+        acc_id = "Argentina/C121/2020"
         params = {
             cst.KEY_ACC_ID: acc_id,
             cst.KEY_COLUMN_LIST: [],
