@@ -91,14 +91,16 @@ PW : tbvjdbwj (슈퍼유저 영타에서 그대로 입력)
 
 ## 데이터베이스 생성
 
+1. 필요한 파일 준비
+    1. 압축파일 `{repo}/extern/DGU2020_covid_database/database/sequences_2020-11-13_07-24.fasta.gz.xz`를 찾아 압축 해제하여 `sequences.fasta` 파일을 `database` 폴더 안에 배치
+    1. 압축파일 `{repo}/extern/DGU2020_covid_database/database/metadata_2020-11-13_07-22.tsv.gz`를 찾아 압축 해제하여 `metadata.tsv` 파일을 `database` 폴더 안에 배치
+
 1. BLAST
-    1. 압축파일 `{repo}/extern/DGU2020_covid_database/database/gisaid_hcov-19_2020_06_29_03.fasta.tar.bz2`를 찾아 압축 해제하여 `gisaid_hcov-19_2020_06_29_03.fasta` 파일을 `database` 폴더 안에 배치
-    1. 레포지토리 루트 폴더에서 terminal을 실행하여 `python manage.py gen_blast_db "./extern/DGU2020_covid_database/database/gisaid_hcov-19_2020_06_29_03.fasta"`를 실행
+    1. 레포지토리 루트 폴더에서 terminal을 실행하여 `python manage.py gen_blast_db "./extern/DGU2020_covid_database/database"`를 실행
     1. `generated blast db successfully`라고 뜨면 성공한 것
 
 1. MySQL
-    1. `populate_mysql_db`는 세 개의 입력 파일을 필요로 하는데, 모두 `{repo}/extern/DGU2020_covid_database/database` 폴더에서 찾을 수 있음
-    1. `python manage.py populate_mysql_db "./extern/DGU2020_covid_database/database/setting.sql" "./extern/DGU2020_covid_database/database/gisaid_hcov-19_2020_06_29_03.fasta" "./extern/DGU2020_covid_database/database/metadata_2020-06-28_21-18.tsv"` 명령어 실행
+    1. 레포지토리 루트 폴더에서 terminal을 실행하여 `python manage.py populate_mysql_db "./extern/DGU2020_covid_database/database"` 명령어 실행
 
 ## 서버 실행
 
