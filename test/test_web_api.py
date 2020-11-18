@@ -49,9 +49,9 @@ class TestWebAPI(unittest.TestCase):
             self.assertEqual(len(response_data[cst.KEY_ACC_ID_LIST]), 10)
 
     def test_get_metadata_of_seq(self):
-        acc_id = "Argentina/C121/2020"
+        test_strain = "Argentina/C121/2020"
         params = {
-            cst.KEY_ACC_ID: acc_id,
+            cst.KEY_ACC_ID: test_strain,
             cst.KEY_COLUMN_LIST: [],
         }
 
@@ -59,7 +59,7 @@ class TestWebAPI(unittest.TestCase):
         print(response_data[cst.KEY_METADATA])
 
         self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
-        self.assertEqual(response_data[cst.KEY_METADATA]["acc_id"], acc_id)
+        self.assertEqual(response_data[cst.KEY_METADATA]["strain"], test_strain)
 
     def test_calc_similarity_of_two_seq(self):
         with open(os.path.join(DB_DATA_PATH, "wuhan.fasta"), "r") as file:
