@@ -55,6 +55,7 @@ PW : tbvjdbwj (슈퍼유저 영타에서 그대로 입력)
     1. pip install `django`
     1. pip install `djangorestframework`
     1. pip install `django-cors-headers`
+    1. pip install `pymysql`
 
 1. MySQL [다운로드](https://dev.mysql.com/downloads/installer/)하여 설치
     1. Terminal에서 `mysql` 프로그램을 바로 실행할 수 있도록 환경변수 등 준비
