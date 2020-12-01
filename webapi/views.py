@@ -17,6 +17,7 @@ import dgucovidb.fasta_tool as fat
 import dgucovidb.tmpCreator_interface as tmpFile
 import dgucovidb.mutation_interface as mut
 
+from . import util as uti
 from . import konst as cst
 
 
@@ -497,9 +498,16 @@ class NumCasesPerDivision(APIView):
             with open("./database/cache/cases_per_division.json", "r") as file:
                 data = json.load(file)
 
+            result = {}
+            for division in data.keys():
+                result[division] = {
+                    "center": None,
+                    "num_cases": data[division]
+                }
+
             return Response({
                 cst.KEY_ERROR_CODE: 0,
-                cst.KEY_RESULT: data,
+                cst.KEY_RESULT: result,
             })
 
         except:
@@ -519,9 +527,23 @@ class NumCasesPerCountry(APIView):
             with open("./database/cache/cases_per_country.json", "r") as file:
                 data = json.load(file)
 
+            finder = uti.LatLngFinder("./database/world_country_and_usa_states_latitude_and_longitude_values.csv")
+
+            result = {}
+            for country in data.keys():
+                latlng_value = None
+                latlng = finder.find_with_alternatives(country)
+                if latlng is not None:
+                    latlng_value = {"lat": latlng[0], "lng": latlng[1]}
+
+                result[country] = {
+                    "center": latlng_value,
+                    "num_cases": data[country]
+                }
+
             return Response({
                 cst.KEY_ERROR_CODE: 0,
-                cst.KEY_RESULT: data,
+                cst.KEY_RESULT: result,
             })
 
         except:
