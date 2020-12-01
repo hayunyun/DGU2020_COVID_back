@@ -10,4 +10,7 @@ urlpatterns = [
     dur.path("calc_similarity_of_two_seq/", views.CalcSimilarityOfTwoSeq.as_view()),
     dur.path("get_all_acc_ids/", views.GetAllAccIDs.as_view()),
     dur.path("find_mutations/", views.FindMutations.as_view()),
+
+    dur.path("num_cases_per_division/", views.NumCasesPerDivision.as_view()),
+    dur.path("num_cases_per_country/", views.NumCasesPerCountry.as_view()),
 ]
