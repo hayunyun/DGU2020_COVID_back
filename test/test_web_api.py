@@ -4,6 +4,7 @@ import unittest
 import requests
 
 import webapi.konst as cst
+import webapi.util as uti
 
 
 API_ENDPOINT = "http://localhost:8000/api/"
@@ -115,6 +116,24 @@ class TestWebAPI(unittest.TestCase):
 
         self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
         print(result)
+
+
+class TestUtils(unittest.TestCase):
+    def test_find_latlng_of_country(self):
+        latlng_finder = uti.LatLngFinder(
+            "./../database/world_country_and_usa_states_latitude_and_longitude_values.csv"
+        )
+
+        with open("./../database/cache/cases_per_country.json", "r") as file:
+            data = json.load(file)
+
+        for country in data.keys():
+            latlng = latlng_finder.find_with_alternatives(country)
+            if latlng is None:
+                print("{} : null".format(country))
+            else:
+                # print("{} : ({}, {})".format(country, latlng[0], latlng[1]))
+                pass
 
 
 if __name__ == '__main__':
