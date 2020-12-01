@@ -2,6 +2,8 @@ import os
 import time
 import json
 
+from django.core.management.base import BaseCommand
+
 import dgucovidb.db_interface as bst
 import dgucovidb.sql_interface as sql
 
@@ -10,7 +12,7 @@ import webapi.konst as cst
 
 BLAST_INTERF = bst.InterfBLAST(cst.BLAST_DB_PATH)
 MYSQL_INTERF = sql.InterfMySQL(cst.MYSQL_USERNAME, cst.MYSQL_PASSWORD)
-CACHE_FOL_PATH = "./../../../database/cache"
+CACHE_FOL_PATH = "./database/cache"
 
 
 def generate_cases_per_places(folder_path: str):
@@ -64,12 +66,11 @@ def generate_cases_per_places(folder_path: str):
         print("Saved:", file_path)
 
 
-def main():
-    if not os.path.isdir(CACHE_FOL_PATH):
-        os.mkdir(CACHE_FOL_PATH)
+class Command(BaseCommand):
+    help = 'Generate cache files'
 
-    generate_cases_per_places(CACHE_FOL_PATH)
+    def handle(self, *args, **options):
+        if not os.path.isdir(CACHE_FOL_PATH):
+            os.mkdir(CACHE_FOL_PATH)
 
-
-if __name__ == '__main__':
-    main()
+        generate_cases_per_places(CACHE_FOL_PATH)
