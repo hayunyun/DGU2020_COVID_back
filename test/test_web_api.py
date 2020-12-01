@@ -102,6 +102,20 @@ class TestWebAPI(unittest.TestCase):
                 self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
                 print(response_data)
 
+    def test_num_cases_per_division(self):
+        response_data = _send_get_req(API_ENDPOINT + "num_cases_per_division/")
+        result = response_data[cst.KEY_RESULT]
+
+        self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
+        print(result)
+
+    def test_num_cases_per_country(self):
+        response_data = _send_get_req(API_ENDPOINT + "num_cases_per_country/")
+        result = response_data[cst.KEY_RESULT]
+
+        self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
+        print(result)
+
 
 if __name__ == '__main__':
     unittest.main()

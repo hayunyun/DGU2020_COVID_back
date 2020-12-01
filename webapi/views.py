@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import shutil
 import traceback
 from typing import Dict, Type, Optional, List
@@ -485,3 +486,47 @@ class FindMutations(APIView):
                 pass
 
         return change_list, indel_list
+
+
+class NumCasesPerDivision(APIView):
+    @staticmethod
+    def get(_: Request, __=None):
+        try:
+            #### Work ####
+
+            with open("./database/cache/cases_per_division.json", "r") as file:
+                data = json.load(file)
+
+            return Response({
+                cst.KEY_ERROR_CODE: 0,
+                cst.KEY_RESULT: data,
+            })
+
+        except:
+            traceback.print_exc()
+            return Response({
+                cst.KEY_ERROR_CODE: 1,
+                cst.KEY_ERROR_TEXT: ERROR_MAP[1],
+            })
+
+
+class NumCasesPerCountry(APIView):
+    @staticmethod
+    def get(_: Request, __=None):
+        try:
+            #### Work ####
+
+            with open("./database/cache/cases_per_country.json", "r") as file:
+                data = json.load(file)
+
+            return Response({
+                cst.KEY_ERROR_CODE: 0,
+                cst.KEY_RESULT: data,
+            })
+
+        except:
+            traceback.print_exc()
+            return Response({
+                cst.KEY_ERROR_CODE: 1,
+                cst.KEY_ERROR_TEXT: ERROR_MAP[1],
+            })
