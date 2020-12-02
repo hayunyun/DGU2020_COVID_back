@@ -55,6 +55,7 @@ class ErrorMap:
             8: "List length does not match: user input size '{}' != expected size '{}'",
             9: "MySQL operation error: {}",
             10: "Your input '{}' is not a DNA sequence",
+            11: "Invalid input",
         })
 
     def __getitem__(self, err_code: int):
@@ -190,6 +191,11 @@ class GetSimilarSeqIDs(APIView):
                 return Response(validate_result)
 
             how_many = int(request.data[cst.KEY_HOW_MANY])
+            if how_many > 250:
+                return Response({
+                    cst.KEY_ERROR_CODE: 11,
+                    cst.KEY_ERROR_TEXT: ERROR_MAP[11] + ": how_many shouldn't exceed 250"
+                })
 
             maybe_valid_seq = _convert_to_seq_if_fasta(request.data[cst.KEY_SEQUENCE])
             if maybe_valid_seq is None:
