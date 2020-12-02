@@ -3,7 +3,7 @@ import time
 import json
 import shutil
 import traceback
-from typing import Dict, Type, Optional, List
+from typing import Dict, Type, Optional, List, Iterable
 
 import pymysql
 from rest_framework.views import APIView
@@ -38,6 +38,52 @@ def _convert_to_seq_if_fasta(maybe_seq) -> Optional[str]:
             return fasta_data[0].sequence
 
     return None
+
+def _build_frequency_map_by_places(id_list: Iterable[str], divi_type: str = "country"):
+    conn, cursor = MYSQL_INTERF.create_connection_cursor()
+
+    divi_dict = {}
+
+    for i, strain in enumerate(id_list):
+        cursor.execute(
+            f"SELECT m.*, s.sequence from meta_data as m, "
+            f"sequences as s where m.strain = s.strain and m.strain = '{strain}';"
+        )
+        metadata = cursor.fetchone()
+        if metadata is None:
+            continue
+
+        try:
+            value = metadata[divi_type]
+        except KeyError:
+            pass
+        else:
+            value = str(value).strip().lower()
+            if value in divi_dict.keys():
+                divi_dict[value] += 1
+            else:
+                divi_dict[value] = 1
+
+    cursor.close()
+    conn.close()
+    return divi_dict
+
+def _build_freq_latlng_map(freq_map: Dict[str, int]):
+    finder = uti.LatLngFinder("./database/world_country_and_usa_states_latitude_and_longitude_values.csv")
+    result = {}
+
+    for place_name in freq_map.keys():
+        latlng_value = None
+        latlng = finder.find_with_alternatives(place_name)
+        if latlng is not None:
+            latlng_value = {"lat": float(latlng[0]), "lng": float(latlng[1])}
+
+        result[place_name] = {
+            "center": latlng_value,
+            "num_cases": freq_map[place_name]
+        }
+
+    return result
 
 
 class ErrorMap:
@@ -532,24 +578,11 @@ class NumCasesPerCountry(APIView):
 
             with open("./database/cache/cases_per_country.json", "r") as file:
                 data = json.load(file)
-
-            finder = uti.LatLngFinder("./database/world_country_and_usa_states_latitude_and_longitude_values.csv")
-
-            result = {}
-            for country in data.keys():
-                latlng_value = None
-                latlng = finder.find_with_alternatives(country)
-                if latlng is not None:
-                    latlng_value = {"lat": latlng[0], "lng": latlng[1]}
-
-                result[country] = {
-                    "center": latlng_value,
-                    "num_cases": data[country]
-                }
+            freq_latlng_map = _build_freq_latlng_map(data)
 
             return Response({
                 cst.KEY_ERROR_CODE: 0,
-                cst.KEY_RESULT: result,
+                cst.KEY_RESULT: freq_latlng_map,
             })
 
         except:
