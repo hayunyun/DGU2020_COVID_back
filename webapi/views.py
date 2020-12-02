@@ -242,6 +242,8 @@ class GetSimilarSeqIDs(APIView):
                     cst.KEY_ERROR_CODE: 11,
                     cst.KEY_ERROR_TEXT: ERROR_MAP[11] + ": how_many shouldn't exceed 250"
                 })
+            elif how_many < 0:
+                how_many = 250
 
             maybe_valid_seq = _convert_to_seq_if_fasta(request.data[cst.KEY_SEQUENCE])
             if maybe_valid_seq is None:
