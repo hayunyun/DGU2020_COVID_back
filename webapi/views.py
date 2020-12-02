@@ -264,6 +264,9 @@ class GetSimilarSeqIDs(APIView):
             ids = BLAST_INTERF.find_similarity_of_the_similars(result_file_name.name, how_many)
             print("[] ids found: {}".format(ids.keys()))
 
+            freq_map = _build_frequency_map_by_places(ids.keys())
+            freq_latlng_map = _build_freq_latlng_map(freq_map)
+
             result_dict = {}
             for x, y in ids.items():
                 result_dict[x] = {
@@ -273,6 +276,7 @@ class GetSimilarSeqIDs(APIView):
 
             return Response({
                 cst.KEY_ACC_ID_LIST: result_dict,
+                cst.KEY_FREQ_LATLNG_MAP: freq_latlng_map,
                 cst.KEY_ERROR_CODE: 0,
             })
 

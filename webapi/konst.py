@@ -14,6 +14,7 @@ KEY_RESULT = "result"
 
 KEY_SIMILARITY_IDENTITY = "simil_identity"
 KEY_SIMILARITY_BIT_SCORE = "simil_bit_score"
+KEY_FREQ_LATLNG_MAP = "freq_latlng_map"
 KEY_HOW_MANY = "how_many"
 
 KEY_MUT_CHANGE_LIST = "mut_change_list"
