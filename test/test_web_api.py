@@ -42,12 +42,12 @@ class TestWebAPI(unittest.TestCase):
 
             response_data = _send_post_req(API_ENDPOINT + "get_similar_seq_ids/", {
                 cst.KEY_SEQUENCE: fasta_str,
-                cst.KEY_HOW_MANY: 10,
+                cst.KEY_HOW_MANY: 200,
             })
             print(response_data)
 
             self.assertEqual(response_data[cst.KEY_ERROR_CODE], 0)
-            self.assertEqual(len(response_data[cst.KEY_ACC_ID_LIST]), 10)
+            self.assertEqual(len(response_data[cst.KEY_ACC_ID_LIST]), 200)
 
     def test_get_metadata_of_seq(self):
         test_strain = "Argentina/C121/2020"
