@@ -29,7 +29,7 @@ class Command(BaseCommand):
         fasta_path = os.path.join(db_src_fol_path, "sequences.fasta")
         metadata_path = os.path.join(db_src_fol_path, "metadata.tsv")
         ref_fasta_path = os.path.join(db_src_fol_path, "wuhan.fasta")
-        cft_path = os.path.join(db_src_fol_path, "country_cfr_ifr.csv")
+        cft_path = os.path.join(db_src_fol_path, "statistic_for_covid_of_the_world.csv")
 
         for p in (setting_path, fasta_path, metadata_path, ref_fasta_path, cft_path):
             if not os.path.isfile(p):
