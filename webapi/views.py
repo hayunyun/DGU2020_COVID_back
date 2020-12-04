@@ -347,6 +347,9 @@ class GetMetadataOfSeq(APIView):
                     except KeyError:
                         result_metadata[requested_column] = None
 
+            if "strain" in result_metadata:
+                result_metadata["acc_id"] = result_metadata["strain"]
+
             return Response({
                 cst.KEY_ERROR_CODE: 0,
                 cst.KEY_METADATA: result_metadata,
