@@ -3,7 +3,7 @@ import time
 import json
 import shutil
 import traceback
-from typing import Dict, Type, Optional, List, Iterable
+from typing import Dict, Type, Optional, List, Iterable, Tuple
 
 import pymysql
 from rest_framework.views import APIView
@@ -507,13 +507,14 @@ class FindMutations(APIView):
             mut_func = mut.InterfMutation(".", "wuhan")
             result = mut_func.get_mutation(temp_file_names[0], temp_file_names[1])
             changes, indels = cls.__reconstruct_mutation_list(result)
+            changes_with_score = cls.__make_mut_list_with_score(changes)
 
             if os.path.isdir("./tmp"):
                 shutil.rmtree("./tmp")
 
             return Response({
                 cst.KEY_ERROR_CODE: 0,
-                cst.KEY_MUT_CHANGE_LIST: changes,
+                cst.KEY_MUT_CHANGE_LIST: changes_with_score,
                 cst.KEY_MUT_INDEL_LIST: indels,
             })
 
@@ -526,8 +527,8 @@ class FindMutations(APIView):
 
     @staticmethod
     def __reconstruct_mutation_list(mut_list: list):
-        change_list: List[str, str, int] = []
-        indel_list: List[str, str] = []
+        change_list: List[Tuple[str, str, int]] = []
+        indel_list: List[Tuple[str, str]] = []
 
         for x in mut_list:
             if 3 == len(x):
@@ -548,6 +549,31 @@ class FindMutations(APIView):
                 pass
 
         return change_list, indel_list
+
+    @staticmethod
+    def __get_score_of_mut(pos: int, cursor):
+        command = "SELECT score FROM pearson WHERE pos='{}';".format(pos)
+        cursor.execute(command)
+        result = cursor.fetchall()
+
+        if not result:
+            return None
+
+        if "score" in result[0].keys():
+            return int(result[0]["score"])
+        else:
+            return None
+
+    @classmethod
+    def __make_mut_list_with_score(cls, change_list: List[Tuple[str, str, int]]):
+        conn, cursor = MYSQL_INTERF.create_connection_cursor()
+        changes_with_score: List[Tuple[str, str, int, Optional[int]]] = []
+
+        for row in change_list:
+            score = cls.__get_score_of_mut(row[2], cursor)
+            changes_with_score.append(row + (score,))
+
+        return changes_with_score
 
 
 class NumCasesPerDivision(APIView):
