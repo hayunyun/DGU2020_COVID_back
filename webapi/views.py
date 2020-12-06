@@ -2,6 +2,7 @@ import os
 import time
 import json
 import shutil
+import threading
 import traceback
 from typing import Dict, Type, Optional, List, Iterable, Tuple
 
@@ -445,6 +446,8 @@ class GetAllAccIDs(APIView):
 
 
 class FindMutations(APIView):
+    __global_lock = threading.Lock()
+
     @classmethod
     def post(cls, request: Request, _=None):
         try:
@@ -504,8 +507,11 @@ class FindMutations(APIView):
                 with open(temp_file_names[i], "w") as file:
                     file.write(seq_fasta[0].export_text())
 
-            mut_func = mut.InterfMutation(".", "wuhan")
-            result = mut_func.get_mutation(temp_file_names[0], temp_file_names[1])
+            # There is a race condition in InterfMutation::get_mutation so lock here
+            with cls.__global_lock:
+                mut_func = mut.InterfMutation(".", "wuhan")
+                result = mut_func.get_mutation(temp_file_names[0], temp_file_names[1])
+
             changes, indels = cls.__reconstruct_mutation_list(result)
             changes_with_score, indels_with_score = cls.__make_mut_list_with_score(changes, indels)
 
