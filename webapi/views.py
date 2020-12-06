@@ -507,7 +507,7 @@ class FindMutations(APIView):
             mut_func = mut.InterfMutation(".", "wuhan")
             result = mut_func.get_mutation(temp_file_names[0], temp_file_names[1])
             changes, indels = cls.__reconstruct_mutation_list(result)
-            changes_with_score = cls.__make_mut_list_with_score(changes)
+            changes_with_score, indels_with_score = cls.__make_mut_list_with_score(changes, indels)
 
             if os.path.isdir("./tmp"):
                 shutil.rmtree("./tmp")
@@ -515,7 +515,7 @@ class FindMutations(APIView):
             return Response({
                 cst.KEY_ERROR_CODE: 0,
                 cst.KEY_MUT_CHANGE_LIST: changes_with_score,
-                cst.KEY_MUT_INDEL_LIST: indels,
+                cst.KEY_MUT_INDEL_LIST: indels_with_score,
             })
 
         except:
@@ -551,7 +551,7 @@ class FindMutations(APIView):
         return change_list, indel_list
 
     @staticmethod
-    def __get_score_of_mut(pos: int, cursor):
+    def __get_score_of_mut(pos, cursor):
         command = "SELECT score FROM pearson WHERE pos='{}';".format(pos)
         cursor.execute(command)
         result = cursor.fetchall()
@@ -565,15 +565,21 @@ class FindMutations(APIView):
             return None
 
     @classmethod
-    def __make_mut_list_with_score(cls, change_list: List[Tuple[str, str, int]]):
+    def __make_mut_list_with_score(cls, change_list: List[Tuple[str, str, int]], indel_list: List[Tuple[str, str]]):
         conn, cursor = MYSQL_INTERF.create_connection_cursor()
         changes_with_score: List[Tuple[str, str, int, Optional[int]]] = []
+        indels_with_score: List[Tuple[str, str, Optional[int]]] = []
 
         for row in change_list:
             score = cls.__get_score_of_mut(row[2], cursor)
             changes_with_score.append(row + (score,))
 
-        return changes_with_score
+        for row in indel_list:
+            pos = row[0]
+            score = cls.__get_score_of_mut(pos, cursor)
+            indels_with_score.append(row + (score,))
+
+        return changes_with_score, indels_with_score
 
 
 class NumCasesPerDivision(APIView):
