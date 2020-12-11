@@ -25,6 +25,7 @@ from . import konst as cst
 BLAST_INTERF = bst.InterfBLAST(cst.BLAST_DB_PATH)
 MYSQL_INTERF = sql.InterfMySQL(cst.MYSQL_USERNAME, cst.MYSQL_PASSWORD)
 
+g_blast_mut = threading.Lock()
 g_mysql_mut = threading.Lock()
 
 
@@ -195,12 +196,13 @@ class SimilarSeqIDs(APIView):
         input_sequence = "".join(input_sequence.split('\n'))
         result_file_name = "result.tmp"
 
-        print("[] started blast query")
-        if not BLAST_INTERF.gen_query_result(input_sequence, result_file_name):
-            return Response("failed to generate BLAST query result")
+        with g_blast_mut:
+            print("[] started blast query")
+            if not BLAST_INTERF.gen_query_result(input_sequence, result_file_name):
+                return Response("failed to generate BLAST query result")
 
-        print("[] started finding similar ids")
-        ids = BLAST_INTERF.find_ids_of_the_similars(result_file_name, how_many)
+            print("[] started finding similar ids")
+            ids = BLAST_INTERF.find_ids_of_the_similars(result_file_name, how_many)
 
         os.remove(result_file_name)
 
@@ -262,13 +264,16 @@ class GetSimilarSeqIDs(APIView):
             #### Work ####
 
             result_file_name = tmpFile.TmpFileName("result-{}.txt".format(time.time()))
-            print("[] started blast query")
-            start_time = time.time()
-            if not BLAST_INTERF.gen_query_result(seq, result_file_name.name):
-                return Response({cst.KEY_ERROR_CODE: 5, cst.KEY_ERROR_TEXT: ERROR_MAP[5]})
-            print("[] finished blast query: {:.3f} sec".format(time.time() - start_time))
 
-            ids = BLAST_INTERF.find_similarity_of_the_similars(result_file_name.name, how_many)
+            with g_blast_mut:
+                print("[] started blast query")
+                start_time = time.time()
+                if not BLAST_INTERF.gen_query_result(seq, result_file_name.name):
+                    return Response({cst.KEY_ERROR_CODE: 5, cst.KEY_ERROR_TEXT: ERROR_MAP[5]})
+                print("[] finished blast query: {:.3f} sec".format(time.time() - start_time))
+
+                ids = BLAST_INTERF.find_similarity_of_the_similars(result_file_name.name, how_many)
+
             freq_map = _build_frequency_map_by_places(ids.keys())
             freq_latlng_map = _build_freq_latlng_map(freq_map)
 
@@ -413,7 +418,8 @@ class CalcSimilarityOfTwoSeq(APIView):
 
             #### Work ####
 
-            simi = BLAST_INTERF.get_similarity_two_seq(seq_1, seq_2)
+            with g_blast_mut:
+                simi = BLAST_INTERF.get_similarity_two_seq(seq_1, seq_2)
 
             return Response({
                 cst.KEY_ERROR_CODE: 0,
