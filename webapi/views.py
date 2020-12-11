@@ -175,45 +175,6 @@ class Echo(APIView):
         return Response(request.data)
 
 
-class SimilarSeqIDs(APIView):
-    """
-    This class has been deprecated.
-    Please don't use it or try to improve it.
-    """
-    @staticmethod
-    def post(request: Request, _=None):
-        if not isinstance(request.data, dict):
-            return Response("invalid input")
-
-        try:
-            input_sequence = str(request.data["seq"])
-            how_many = int(request.data["how_many"])
-        except KeyError:
-            return Response("no input found")
-        except ValueError:
-            return Response("invalid input")
-
-        input_sequence = "".join(input_sequence.split('\n'))
-        result_file_name = "result.tmp"
-
-        with g_blast_mut:
-            print("[] started blast query")
-            if not BLAST_INTERF.gen_query_result(input_sequence, result_file_name):
-                return Response("failed to generate BLAST query result")
-
-            print("[] started finding similar ids")
-            ids = BLAST_INTERF.find_ids_of_the_similars(result_file_name, how_many)
-
-        os.remove(result_file_name)
-
-        result: Dict[str: Dict] = {}
-        with g_mysql_mut:
-            for acc_id in ids:
-                result[acc_id] = MYSQL_INTERF.get_metadata_of(acc_id)
-
-        return Response(result)
-
-
 class GetSimilarSeqIDs(APIView):
     """
     Requst payload must have following fields
