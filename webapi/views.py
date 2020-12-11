@@ -25,6 +25,8 @@ from . import konst as cst
 BLAST_INTERF = bst.InterfBLAST(cst.BLAST_DB_PATH)
 MYSQL_INTERF = sql.InterfMySQL(cst.MYSQL_USERNAME, cst.MYSQL_PASSWORD)
 
+g_mysql_mut = threading.Lock()
+
 
 def _convert_to_seq_if_fasta(maybe_seq) -> Optional[str]:
     if isinstance(maybe_seq, str):
@@ -41,32 +43,34 @@ def _convert_to_seq_if_fasta(maybe_seq) -> Optional[str]:
     return None
 
 def _build_frequency_map_by_places(id_list: Iterable[str], divi_type: str = "country"):
-    conn, cursor = MYSQL_INTERF.create_connection_cursor()
-
     divi_dict = {}
 
-    for i, strain in enumerate(id_list):
-        cursor.execute(
-            f"SELECT m.*, s.sequence from meta_data as m, "
-            f"sequences as s where m.strain = s.strain and m.strain = '{strain}';"
-        )
-        metadata = cursor.fetchone()
-        if metadata is None:
-            continue
+    with g_mysql_mut:
+        conn, cursor = MYSQL_INTERF.create_connection_cursor()
 
-        try:
-            value = metadata[divi_type]
-        except KeyError:
-            pass
-        else:
-            value = str(value).strip().lower()
-            if value in divi_dict.keys():
-                divi_dict[value] += 1
+        for i, strain in enumerate(id_list):
+            cursor.execute(
+                f"SELECT m.*, s.sequence from meta_data as m, "
+                f"sequences as s where m.strain = s.strain and m.strain = '{strain}';"
+            )
+            metadata = cursor.fetchone()
+            if metadata is None:
+                continue
+
+            try:
+                value = metadata[divi_type]
+            except KeyError:
+                pass
             else:
-                divi_dict[value] = 1
+                value = str(value).strip().lower()
+                if value in divi_dict.keys():
+                    divi_dict[value] += 1
+                else:
+                    divi_dict[value] = 1
 
-    cursor.close()
-    conn.close()
+        cursor.close()
+        conn.close()
+
     return divi_dict
 
 def _build_freq_latlng_map(freq_map: Dict[str, int]):
@@ -170,43 +174,6 @@ class Echo(APIView):
         return Response(request.data)
 
 
-class SimilarSeqIDs(APIView):
-    """
-    This class has been deprecated.
-    Please don't use it or try to improve it.
-    """
-    @staticmethod
-    def post(request: Request, _=None):
-        if not isinstance(request.data, dict):
-            return Response("invalid input")
-
-        try:
-            input_sequence = str(request.data["seq"])
-            how_many = int(request.data["how_many"])
-        except KeyError:
-            return Response("no input found")
-        except ValueError:
-            return Response("invalid input")
-
-        input_sequence = "".join(input_sequence.split('\n'))
-        result_file_name = "result.tmp"
-
-        print("[] started blast query")
-        if not BLAST_INTERF.gen_query_result(input_sequence, result_file_name):
-            return Response("failed to generate BLAST query result")
-
-        print("[] started finding similar ids")
-        ids = BLAST_INTERF.find_ids_of_the_similars(result_file_name, how_many)
-
-        os.remove(result_file_name)
-
-        result: Dict[str: Dict] = {}
-        for acc_id in ids:
-            result[acc_id] = MYSQL_INTERF.get_metadata_of(acc_id)
-
-        return Response(result)
-
-
 class GetSimilarSeqIDs(APIView):
     """
     Requst payload must have following fields
@@ -257,14 +224,14 @@ class GetSimilarSeqIDs(APIView):
             #### Work ####
 
             result_file_name = tmpFile.TmpFileName("result-{}.txt".format(time.time()))
+
             print("[] started blast query")
+            start_time = time.time()
             if not BLAST_INTERF.gen_query_result(seq, result_file_name.name):
                 return Response({cst.KEY_ERROR_CODE: 5, cst.KEY_ERROR_TEXT: ERROR_MAP[5]})
-            print("[] finished blast query")
+            print("[] finished blast query: {:.3f} sec".format(time.time() - start_time))
 
             ids = BLAST_INTERF.find_similarity_of_the_similars(result_file_name.name, how_many)
-            print("[] ids found: {}".format(ids.keys()))
-
             freq_map = _build_frequency_map_by_places(ids.keys())
             freq_latlng_map = _build_freq_latlng_map(freq_map)
 
@@ -324,7 +291,8 @@ class GetMetadataOfSeq(APIView):
             #### Work ####
 
             try:
-                metadata = MYSQL_INTERF.get_metadata_of(acc_id)
+                with g_mysql_mut:
+                    metadata = MYSQL_INTERF.get_metadata_of(acc_id)
             except pymysql.err.OperationalError as e:
                 return Response({
                     cst.KEY_ERROR_CODE: 9,
@@ -430,7 +398,8 @@ class GetAllAccIDs(APIView):
         try:
             #### Work ####
 
-            acc_id_list = MYSQL_INTERF.get_all_strains()
+            with g_mysql_mut:
+                acc_id_list = MYSQL_INTERF.get_all_strains()
 
             return Response({
                 cst.KEY_ERROR_CODE: 0,
@@ -572,18 +541,23 @@ class FindMutations(APIView):
 
     @classmethod
     def __make_mut_list_with_score(cls, change_list: List[Tuple[str, str, int]], indel_list: List[Tuple[str, str]]):
-        conn, cursor = MYSQL_INTERF.create_connection_cursor()
         changes_with_score: List[Tuple[str, str, int, Optional[int]]] = []
         indels_with_score: List[Tuple[str, str, Optional[int]]] = []
 
-        for row in change_list:
-            score = cls.__get_score_of_mut(row[2], cursor)
-            changes_with_score.append(row + (score,))
+        with g_mysql_mut:
+            conn, cursor = MYSQL_INTERF.create_connection_cursor()
 
-        for row in indel_list:
-            pos = row[0]
-            score = cls.__get_score_of_mut(pos, cursor)
-            indels_with_score.append(row + (score,))
+            for row in change_list:
+                score = cls.__get_score_of_mut(row[2], cursor)
+                changes_with_score.append(row + (score,))
+
+            for row in indel_list:
+                pos = row[0]
+                score = cls.__get_score_of_mut(pos, cursor)
+                indels_with_score.append(row + (score,))
+
+            cursor.close()
+            conn.close()
 
         return changes_with_score, indels_with_score
 
