@@ -258,13 +258,12 @@ class GetSimilarSeqIDs(APIView):
 
             result_file_name = tmpFile.TmpFileName("result-{}.txt".format(time.time()))
             print("[] started blast query")
+            start_time = time.time()
             if not BLAST_INTERF.gen_query_result(seq, result_file_name.name):
                 return Response({cst.KEY_ERROR_CODE: 5, cst.KEY_ERROR_TEXT: ERROR_MAP[5]})
-            print("[] finished blast query")
+            print("[] finished blast query: {:.3f} sec".format(time.time() - start_time))
 
             ids = BLAST_INTERF.find_similarity_of_the_similars(result_file_name.name, how_many)
-            print("[] ids found: {}".format(ids.keys()))
-
             freq_map = _build_frequency_map_by_places(ids.keys())
             freq_latlng_map = _build_freq_latlng_map(freq_map)
 
